@@ -1,8 +1,6 @@
 package com.example.queueless.ui.auth.otp
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,21 +13,26 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.queueless.data.remote.dto.OtpFlow
 import com.example.queueless.ui.auth.AuthViewModel.AuthViewModel
+import com.example.queueless.ui.navigation.Routes
 
 @Composable
 fun OtpScreen(
     navController: NavController,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    flow: OtpFlow
 ) {
 
     val otpLength = 6
     val otpValues = remember { mutableStateListOf(*Array(otpLength) { "" }) }
     val focusRequesters = remember { List(otpLength) { FocusRequester() } }
+
+    val loading by authViewModel.loading.collectAsState()
+    val error by authViewModel.error.collectAsState()
 
     Column(
         modifier = Modifier
@@ -44,18 +47,26 @@ fun OtpScreen(
                 .height(220.dp)
                 .background(
                     color = Color(0xFF2F66F3),
-                    shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)
+                    shape = RoundedCornerShape(
+                        bottomStart = 28.dp,
+                        bottomEnd = 28.dp
+                    )
                 ),
             contentAlignment = Alignment.CenterStart
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
-                    text = "Verify OTP",
+                    text = if (flow == OtpFlow.REGISTER)
+                        "Verify Registration OTP"
+                    else
+                        "Verify Login OTP",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
+
                 Spacer(modifier = Modifier.height(6.dp))
+
                 Text(
                     text = "Enter the 6-digit code sent to your email",
                     color = Color.White.copy(alpha = 0.85f)
@@ -72,7 +83,6 @@ fun OtpScreen(
             shape = RoundedCornerShape(20.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-
             Column(
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -117,7 +127,12 @@ fun OtpScreen(
                     onClick = {
                         val otp = otpValues.joinToString("")
                         if (otp.length == 6) {
-//                            authViewModel.verifyOtp(otp)
+                            authViewModel.verifyOtp(otp)
+
+                            // ✅ Navigate AFTER verification call
+                            navController.navigate(Routes.Dashboard.route) {
+                                popUpTo(0)
+                            }
                         }
                     },
                     modifier = Modifier
@@ -128,16 +143,23 @@ fun OtpScreen(
                         containerColor = Color(0xFF2F66F3)
                     )
                 ) {
-                    Text("Verify & Continue", fontWeight = FontWeight.Bold)
+                    if (loading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else {
+                        Text("Verify & Continue", fontWeight = FontWeight.Bold)
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                /* 🔁 RESEND OTP */
-                TextButton(onClick = {
-//                    authViewModel.resendOtp()
-                }) {
-                    Text("Resend OTP")
+                error?.let {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }

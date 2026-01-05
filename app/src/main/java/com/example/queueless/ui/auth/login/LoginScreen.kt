@@ -14,15 +14,32 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.queueless.data.remote.dto.OtpFlow
+import com.example.queueless.ui.auth.AuthViewModel.AuthViewModel
 import com.example.queueless.ui.navigation.Routes
 
 @Composable
 fun LoginScreen(
-    navController: NavController
+    navController: NavController,
+    authViewModel: AuthViewModel
 ) {
+
+    val loginSuccess by authViewModel.loginSuccess.collectAsState()
+    val loading by authViewModel.loading.collectAsState()
+    val error by authViewModel.error.collectAsState()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    LaunchedEffect(loginSuccess) {
+        if (loginSuccess) {
+            navController.navigate(
+                Routes.Otp.createRoute(OtpFlow.LOGIN)
+            )
+            authViewModel.resetLoginState()
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -95,6 +112,7 @@ fun LoginScreen(
                 /* 🔹 LOGIN BUTTON */
                 Button(
                     onClick = {
+                        authViewModel.login(email, password)
                         /*
                           LOGIN BODY:
                           {
@@ -103,7 +121,7 @@ fun LoginScreen(
                           }
                           -> Backend sends OTP
                         */
-                        navController.navigate(Routes.Otp.route)
+//                        navController.navigate(Routes.Otp.route)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -113,8 +131,26 @@ fun LoginScreen(
                         containerColor = Color(0xFF2F66F3)
                     )
                 ) {
-                    Text("Login & Send OTP", fontWeight = FontWeight.Bold)
+                    if (loading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else {
+                        Text("Login & Send OTP", fontWeight = FontWeight.Bold)
+                    }
                 }
+
+                error?.let {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
