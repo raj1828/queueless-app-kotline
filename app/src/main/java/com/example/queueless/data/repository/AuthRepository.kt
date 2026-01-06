@@ -1,5 +1,7 @@
 package com.example.queueless.data.repository
 
+import com.example.queueless.data.local.dao.AuthDao
+import com.example.queueless.data.local.entity.AuthEntity
 import com.example.queueless.data.remote.RetrofitClient
 import com.example.queueless.data.remote.auth.AuthApi
 import com.example.queueless.data.remote.dto.auth.ApiResponse
@@ -8,7 +10,12 @@ import com.example.queueless.data.remote.dto.auth.LoginRequest
 import com.example.queueless.data.remote.dto.auth.RegisterRequest
 import com.example.queueless.data.remote.dto.auth.VerifyOtpRequest
 
-class AuthRepository {
+class AuthRepository(
+    private val authDao: AuthDao
+) {
+
+    fun observeAuth() = authDao.getAuth()
+
     private  val api = RetrofitClient
         .retrofit
         .create(AuthApi::class.java)
@@ -48,5 +55,22 @@ class AuthRepository {
         return  api.verifyLoginOtp(
             VerifyOtpRequest(otp, userId)
         )
+    }
+
+    suspend fun saveSession(
+        accessToken: String,
+        refreshToken: String
+    ) {
+        authDao.saveAuth(
+            AuthEntity(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                isAuthenticated = true
+            )
+        )
+    }
+
+    suspend fun clearSession() {
+        authDao.clearAuth()
     }
 }

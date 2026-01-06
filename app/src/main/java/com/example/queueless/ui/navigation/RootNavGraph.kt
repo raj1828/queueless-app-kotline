@@ -15,6 +15,19 @@ import com.example.queueless.ui.dashboard.DashboardScreen
 fun RootNavGraph(authViewModel: AuthViewModel) {
 
     val navController = rememberNavController()
+    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            navController.navigate(Routes.Dashboard.route) {
+                popUpTo(0)
+            }
+        } else {
+            navController.navigate(Routes.Login.route) {
+                popUpTo(0)
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -34,16 +47,11 @@ fun RootNavGraph(authViewModel: AuthViewModel) {
             arguments = listOf(
                 navArgument("flow") { type = NavType.StringType }
             )
-        ) { backStackEntry ->
-
-            val flow = OtpFlow.valueOf(
-                backStackEntry.arguments?.getString("flow")!!
-            )
-
+        ) {
             OtpScreen(
                 navController = navController,
                 authViewModel = authViewModel,
-                flow = flow
+                flow = OtpFlow.valueOf(it.arguments?.getString("flow")!!)
             )
         }
 
@@ -52,3 +60,4 @@ fun RootNavGraph(authViewModel: AuthViewModel) {
         }
     }
 }
+

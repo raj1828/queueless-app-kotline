@@ -4,15 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.queueless.data.local.TokenDataStore
 import com.example.queueless.data.repository.AuthRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
-    private val tokenStore: TokenDataStore
+    private val tokenStore: TokenDataStore,
+    private val repository: AuthRepository
 ) : ViewModel() {
-
-    private val repository = AuthRepository()
 
     /* ---------------- EXISTING STATES (UNCHANGED) ---------------- */
 
@@ -28,12 +26,29 @@ class AuthViewModel(
     private val _registerSuccess = MutableStateFlow(false)
     val registerSuccess: StateFlow<Boolean> = _registerSuccess
 
+    /* ---------------- ROOM AUTH STATE ---------------- */
+
+    /**
+     * 🔐 TRUE  -> user already logged in (skip login)
+     * 🔓 FALSE -> user must login
+     */
+    val isLoggedIn: StateFlow<Boolean> =
+        repository.observeAuth()
+            .map { auth ->
+                auth?.isAuthenticated == true
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = false
+            )
+
     /* ---------------- INTERNAL (NOT STATE) ---------------- */
 
-    // 🔑 userId returned from backend (used for OTP verification)
+    // userId from backend (used for OTP verification)
     private var userId: String? = null
 
-    // 🔁 Flow type (REGISTER / LOGIN)
+    // true = register flow, false = login flow
     private var isRegisterFlow: Boolean = false
 
     /* ---------------- REGISTER ---------------- */
@@ -57,7 +72,6 @@ class AuthViewModel(
                 )
 
                 if (response.message == "Registration successful. Please verify OTP.") {
-                    // ⚠️ store userId from backend response
                     userId = response.userId
                     isRegisterFlow = true
                     _registerSuccess.value = true
@@ -85,12 +99,11 @@ class AuthViewModel(
 
             try {
                 val response = repository.login(
-                    email,
-                    password
+                    email = email,
+                    password = password
                 )
 
                 if (response.message == "OTP sent for login verification") {
-                    // ⚠️ store userId from backend response
                     userId = response.userId
                     isRegisterFlow = false
                     _loginSuccess.value = true
@@ -106,7 +119,7 @@ class AuthViewModel(
         }
     }
 
-    /* ---------------- OTP VERIFY (SINGLE ENTRY POINT) ---------------- */
+    /* ---------------- OTP VERIFY (REGISTER + LOGIN) ---------------- */
 
     fun verifyOtp(otp: String) {
         viewModelScope.launch {
@@ -114,8 +127,7 @@ class AuthViewModel(
             _error.value = null
 
             try {
-                val uid = userId
-                    ?: throw IllegalStateException("UserId not found")
+                val uid = userId ?: throw IllegalStateException("UserId not found")
 
                 val tokenResponse =
                     if (isRegisterFlow) {
@@ -130,7 +142,13 @@ class AuthViewModel(
                         )
                     }
 
-                // ✅ SAVE TOKENS AFTER SUCCESS
+                // ✅ SAVE SESSION IN ROOM
+                repository.saveSession(
+                    accessToken = tokenResponse.accessToken,
+                    refreshToken = tokenResponse.refreshToken
+                )
+
+                // (Optional) also save in DataStore if you still want
                 tokenStore.saveTokens(
                     access = tokenResponse.accessToken,
                     refresh = tokenResponse.refreshToken
@@ -153,6 +171,7 @@ class AuthViewModel(
 
     fun logout() {
         viewModelScope.launch {
+            repository.clearSession()
             tokenStore.clear()
         }
     }
