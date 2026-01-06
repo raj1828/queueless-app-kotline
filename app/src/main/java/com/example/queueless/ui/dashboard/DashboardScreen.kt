@@ -2,26 +2,70 @@ package com.example.queueless.ui.dashboard
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.*
 import com.example.queueless.ui.auth.AuthViewModel.AuthViewModel
+import com.example.queueless.ui.dashboard.components.DashboardBottomBar
+import com.example.queueless.ui.homescreen.HomeScreen
 
 @Composable
-fun DashboardScreen(authViewModel: AuthViewModel) {
+fun DashboardScreen(
+    authViewModel: AuthViewModel
+) {
+    val dashboardNavController = rememberNavController()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("Welcome to QueueLess 🎉")
+    Scaffold(
+        bottomBar = {
+            DashboardBottomBar(navController = dashboardNavController)
+        }
+    ) { paddingValues ->
 
-        Spacer(Modifier.height(20.dp))
+        NavHost(
+            navController = dashboardNavController,
+            startDestination = "home",
+            modifier = Modifier.padding(paddingValues)
+        ) {
 
-        Button(onClick = { authViewModel.logout() }) {
-            Text("Logout")
+            composable("home") {
+                HomeScreen()
+            }
+
+            composable("queue") {
+                QueueScreen()
+            }
+
+            composable("alerts") {
+                AlertsScreen()
+            }
+
+            composable("search") {
+                SearchScreen()
+            }
         }
     }
 }
+
+@Composable
+fun QueueScreen() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Queue Screen")
+    }
+}
+
+@Composable
+fun AlertsScreen() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Alerts Screen")
+    }
+}
+
+@Composable
+fun SearchScreen() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Search Screen")
+    }
+}
+
+

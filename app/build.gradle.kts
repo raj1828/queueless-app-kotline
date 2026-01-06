@@ -81,4 +81,7 @@ dependencies {
 
     /* -------------------- OKHTTP (OPTIONAL BUT RECOMMENDED) -------------------- */
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    /* -------------------- Material Icon Extend -------------------- */
+    implementation("androidx.compose.material:material-icons-extended")
 }

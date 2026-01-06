@@ -56,7 +56,7 @@ class AuthViewModel(
                     role
                 )
 
-                if (response.message == "OTP sent") {
+                if (response.message == "Registration successful. Please verify OTP.") {
                     // ⚠️ store userId from backend response
                     userId = response.userId
                     isRegisterFlow = true
@@ -89,7 +89,7 @@ class AuthViewModel(
                     password
                 )
 
-                if (response.message == "OTP sent") {
+                if (response.message == "OTP sent for login verification") {
                     // ⚠️ store userId from backend response
                     userId = response.userId
                     isRegisterFlow = false
