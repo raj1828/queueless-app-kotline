@@ -25,7 +25,7 @@ fun DashboardScreen(
         NavHost(
             navController = dashboardNavController,
             startDestination = "home",
-            modifier = Modifier.padding(paddingValues)
+//            modifier = Modifier.padding(paddingValues)
         ) {
 
             composable("home") {
