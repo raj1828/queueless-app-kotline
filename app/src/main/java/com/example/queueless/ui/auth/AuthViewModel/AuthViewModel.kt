@@ -26,6 +26,10 @@ class AuthViewModel(
     private val _registerSuccess = MutableStateFlow(false)
     val registerSuccess: StateFlow<Boolean> = _registerSuccess
 
+    private val _otpVerified = MutableStateFlow(false)
+    val otpVerified: StateFlow<Boolean> = _otpVerified
+
+
     /* ---------------- ROOM AUTH STATE ---------------- */
 
     /**
@@ -103,7 +107,7 @@ class AuthViewModel(
                     password = password
                 )
 
-                if (response.message == "OTP sent for login verification") {
+                if (response.success) {
                     userId = response.userId
                     isRegisterFlow = false
                     _loginSuccess.value = true
@@ -125,34 +129,31 @@ class AuthViewModel(
         viewModelScope.launch {
             _loading.value = true
             _error.value = null
+            _otpVerified.value = false
 
             try {
                 val uid = userId ?: throw IllegalStateException("UserId not found")
 
                 val tokenResponse =
                     if (isRegisterFlow) {
-                        repository.verifyRegisterOtp(
-                            userId = uid,
-                            otp = otp
-                        )
+                        repository.verifyRegisterOtp(uid, otp)
                     } else {
-                        repository.verifyLoginOtp(
-                            userId = uid,
-                            otp = otp
-                        )
+                        repository.verifyLoginOtp(uid, otp)
                     }
 
-                // ✅ SAVE SESSION IN ROOM
+                // ✅ Save session
                 repository.saveSession(
                     accessToken = tokenResponse.accessToken,
                     refreshToken = tokenResponse.refreshToken
                 )
 
-                // (Optional) also save in DataStore if you still want
                 tokenStore.saveTokens(
                     access = tokenResponse.accessToken,
                     refresh = tokenResponse.refreshToken
                 )
+
+                // ✅ MARK OTP VERIFIED
+                _otpVerified.value = true
 
             } catch (e: Exception) {
                 _error.value = e.message
@@ -161,6 +162,7 @@ class AuthViewModel(
             _loading.value = false
         }
     }
+
 
     /* ---------------- HELPERS ---------------- */
 

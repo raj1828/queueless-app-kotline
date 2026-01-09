@@ -6,13 +6,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.*
+import com.example.queueless.data.remote.ApiClient
 import com.example.queueless.ui.auth.AuthViewModel.AuthViewModel
 import com.example.queueless.ui.dashboard.components.DashboardBottomBar
+import com.example.queueless.ui.dashboard.dashboard_viewmodel.DashboardViewModel
 import com.example.queueless.ui.homescreen.HomeScreen
 
 @Composable
 fun DashboardScreen(
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    dashboardViewModel: DashboardViewModel
 ) {
     val dashboardNavController = rememberNavController()
 
@@ -29,7 +32,7 @@ fun DashboardScreen(
         ) {
 
             composable("home") {
-                HomeScreen()
+                HomeScreen(dashboardViewModel)
             }
 
             composable("queue") {
@@ -41,7 +44,7 @@ fun DashboardScreen(
             }
 
             composable("search") {
-                SearchScreen()
+                SearchScreen(authViewModel)
             }
         }
     }
@@ -62,10 +65,25 @@ fun AlertsScreen() {
 }
 
 @Composable
-fun SearchScreen() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Search Screen")
+fun SearchScreen(
+    authViewModel: AuthViewModel
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Button(
+            onClick = {
+                authViewModel.logout()
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error
+            )
+        ) {
+            Text("Logout")
+        }
     }
 }
+
 
 

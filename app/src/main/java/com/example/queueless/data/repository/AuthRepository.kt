@@ -2,31 +2,26 @@ package com.example.queueless.data.repository
 
 import com.example.queueless.data.local.dao.AuthDao
 import com.example.queueless.data.local.entity.AuthEntity
-import com.example.queueless.data.remote.RetrofitClient
 import com.example.queueless.data.remote.auth.AuthApi
-import com.example.queueless.data.remote.dto.auth.ApiResponse
-import com.example.queueless.data.remote.dto.auth.AuthTokenResponse
-import com.example.queueless.data.remote.dto.auth.LoginRequest
-import com.example.queueless.data.remote.dto.auth.RegisterRequest
-import com.example.queueless.data.remote.dto.auth.VerifyOtpRequest
+import com.example.queueless.data.remote.dto.auth.*
+import retrofit2.Retrofit
 
 class AuthRepository(
-    private val authDao: AuthDao
+    private val authDao: AuthDao,
+    retrofit: Retrofit          // 👈 INJECT RETROFIT
 ) {
 
-    fun observeAuth() = authDao.getAuth()
+    private val api = retrofit.create(AuthApi::class.java)
 
-    private  val api = RetrofitClient
-        .retrofit
-        .create(AuthApi::class.java)
+    fun observeAuth() = authDao.getAuth()
 
     suspend fun register(
         name: String,
         email: String,
         password: String,
         user: String
-    ): ApiResponse<Unit>{
-        return  api.register(
+    ): ApiResponse<Unit> {
+        return api.register(
             RegisterRequest(name, email, password, user)
         )
     }
@@ -35,7 +30,7 @@ class AuthRepository(
         email: String,
         password: String
     ): ApiResponse<Unit> {
-        return  api.login(
+        return api.login(
             LoginRequest(email, password)
         )
     }
@@ -43,16 +38,17 @@ class AuthRepository(
     suspend fun verifyRegisterOtp(
         userId: String,
         otp: String
-    ): AuthTokenResponse{
-        return  api.verifyRegisterOtp(
+    ): AuthTokenResponse {
+        return api.verifyRegisterOtp(
             VerifyOtpRequest(otp, userId)
         )
     }
+
     suspend fun verifyLoginOtp(
         userId: String,
         otp: String
-    ): AuthTokenResponse{
-        return  api.verifyLoginOtp(
+    ): AuthTokenResponse {
+        return api.verifyLoginOtp(
             VerifyOtpRequest(otp, userId)
         )
     }

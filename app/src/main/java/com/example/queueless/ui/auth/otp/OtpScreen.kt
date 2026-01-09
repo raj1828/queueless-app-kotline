@@ -33,6 +33,16 @@ fun OtpScreen(
 
     val loading by authViewModel.loading.collectAsState()
     val error by authViewModel.error.collectAsState()
+    val otpVerified by authViewModel.otpVerified.collectAsState()
+
+    LaunchedEffect(otpVerified) {
+        if (otpVerified) {
+            navController.navigate(Routes.Dashboard.route) {
+                popUpTo(0)
+            }
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -128,11 +138,6 @@ fun OtpScreen(
                         val otp = otpValues.joinToString("")
                         if (otp.length == 6) {
                             authViewModel.verifyOtp(otp)
-
-                            // ✅ Navigate AFTER verification call
-                            navController.navigate(Routes.Dashboard.route) {
-                                popUpTo(0)
-                            }
                         }
                     },
                     modifier = Modifier

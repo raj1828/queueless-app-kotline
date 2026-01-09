@@ -37,23 +37,24 @@ fun ServiceCard(
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                TimeBadge(service.waitTimeMin)
+                TimeBadge(15)
             }
 
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = service.location,
+                text = service.address,
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                InfoChip("${service.distanceKm} km")
-                CrowdChip(service.crowdLevel)
+                InfoChip(service.category)
+                CrowdChip(CrowdLevel.LOW)
             }
         }
     }
 }
+

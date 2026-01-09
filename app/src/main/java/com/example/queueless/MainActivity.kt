@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.queueless.data.local.TokenDataStore
 import com.example.queueless.data.local.db.AppDatabase
+import com.example.queueless.data.remote.ApiClient
 import com.example.queueless.data.repository.AuthRepository
 import com.example.queueless.ui.auth.AuthViewModel.AuthViewModel
 import com.example.queueless.ui.navigation.RootNavGraph
@@ -15,17 +16,25 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         enableEdgeToEdge()
 
         /* ---------------- DEPENDENCIES ---------------- */
 
-        val tokenStore = TokenDataStore(this)
+        val tokenStore = TokenDataStore(applicationContext)
 
-        val database = AppDatabase.getInstance(this)
+        val database = AppDatabase.getInstance(applicationContext)
         val authDao = database.authDao()
 
-        val authRepository = AuthRepository(authDao)
+        // 🔑 CREATE RETROFIT ONCE (WITH AUTH INTERCEPTOR)
+        val retrofit = ApiClient.create(applicationContext) {
+            // Logout callback (navigation handled in NavGraph)
+        }
+
+        // 🔑 PASS RETROFIT INTO REPOSITORY
+        val authRepository = AuthRepository(
+            authDao = authDao,
+            retrofit = retrofit
+        )
 
         val authViewModel = AuthViewModel(
             tokenStore = tokenStore,
@@ -36,7 +45,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             QueueLessTheme {
-                RootNavGraph(authViewModel)
+                RootNavGraph(authViewModel = authViewModel, retrofit = retrofit)
             }
         }
     }
